@@ -14,6 +14,7 @@ library(tidyverse)
 ```{r, cache = TRUE}
 library(p8105.datasets)
 data("instacart")
+data("brfss_smart2010")
 ```
 
 The "instacart" dataset is `r nrow(instacart)` rows by `r ncol(instacart)` columns. 
@@ -102,4 +103,77 @@ instacart %>%
   
   
 ```
+
+## Problem 2
+
+```{r}
+brfss_smart2010 <- brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(topic == "Overall Health") %>%
+  mutate(
+    response = factor(response, 
+                      labels  = c("Poor", "Fair", "Good", "Very good", "Excellent")),
+    state = match(locationabbr, state.abb),
+    state = state.name[state],
+    state = replace_na(state, "District of Columbia")
+  ) %>% 
+  arrange(response)
+```
+
+```{r}
+brfss_smart2010 %>% 
+  filter(year == 2002) %>% 
+  select(state) %>% 
+  group_by(state) %>% 
+  count() %>% 
+  filter(n > 6) %>% 
+  rename(State = state,
+         Locations = n) %>% 
+  knitr::kable()
+```
+```{r}
+brfss_smart2010 %>% 
+  filter(year == 2010) %>% 
+  select(state, locationdesc) %>% 
+  group_by(state) %>% 
+  count() %>% 
+  filter(n > 6) %>% 
+  rename(State = state,
+         Locations = n) %>% 
+  knitr::kable()
+```
+
+```{r}
+df <- brfss_smart2010 %>% 
+  filter(response == "Excellent") %>% 
+  group_by(year, state) %>% 
+  summarize(
+    mean_dat = mean(data_value)
+  ) %>% 
+  select(year, state, mean_dat)
+```
+
+```{r, fig.width = 10, fig.height = 6}
+df %>% 
+  ggplot(aes(x = year, y = mean_dat, group = state, color = state)) +
+  geom_line() +
+  theme(legend.position = "bottom") +
+  viridis::scale_color_viridis(
+    name = "state",
+    discrete = TRUE)
+```
+
+```{r}
+brfss_smart2010 %>% 
+  filter(state == "New York",
+         year == c(2006, 2010)) %>% 
+  ggplot(aes(x = response, y = data_value)) +
+  geom_boxplot() +
+  labs(x = "Response",
+       y = "Data Value") +
+  facet_grid(~year)
+
+```
+
+## Problem 3
 
