@@ -11,10 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-```{r}
+```{r, cache = TRUE}
 library(p8105.datasets)
 data("instacart")
-instacart
 ```
 
 The "instacart" dataset is `r nrow(instacart)` rows by `r ncol(instacart)` columns. 
@@ -34,7 +33,73 @@ since the prior order, and whether a specific item was reordered or not. There a
 also details about where the item is found (aisle, department)
 
 ```{r}
+aisle_dat <- instacart %>% 
+  group_by(aisle) %>%
+  summarize(
+    count = n()) %>% 
+  arrange(desc(count))
+```
+
+## Problem 1
+
+There are `r nrow(aisle_dat)` aisles, and `r pull(top_n(aisle_dat, 1, count), aisle)` was the aisle the most items were ordered from.
+
+```{r, fig.width = 10}
 instacart %>% 
-  distinct(aisle)
+  group_by(aisle) %>% 
+  count() %>% 
+  filter(
+    n > 10000
+  ) %>% 
+  ggplot(aes(x = aisle, y = n)) +
+  geom_col() +
+  labs(xlab = "Count",
+       ylab = "Aisle")
+
+```
+
+```{r}
+instacart %>% 
+  filter(
+    aisle == c("baking ingredients", 
+               "dog food care", 
+               "packaged vegetables fruits")
+    ) %>% 
+  mutate(
+    aisle = 
+      recode(aisle,
+             "baking ingredients" = "Baking Ingredients",
+             "dog food care" = "Dog Food Care",
+             "packaged vegetables fruits" = "Packaged Vegetables Fruits")) %>% 
+  group_by(aisle, product_name) %>% 
+  summarize(
+    count =  n()
+  ) %>% 
+  top_n(., 3, count) %>% 
+  arrange(desc(count), .by_group = TRUE) %>% 
+  rename(Aisle = aisle,
+         "Product Name" = product_name,
+         Count = count) %>% 
+  knitr::kable()
+```
+
+```{r}
+instacart %>% 
+  filter(product_name == c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarize(
+    mean_hr = round(mean(order_hour_of_day), digits = 1)
+  ) %>% 
+  mutate(
+    order_dow = factor(order_dow, 
+                       labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))) %>%
+  rename("Product Name" = product_name) %>% 
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hr
+  ) %>% 
+  knitr::kable()
+  
+  
 ```
 
