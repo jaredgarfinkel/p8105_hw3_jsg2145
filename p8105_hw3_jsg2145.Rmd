@@ -1,0 +1,40 @@
+---
+title: "p8105_hw3_jsg2145"
+author: "Jared Garfinkel"
+date: "10/9/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+```{r}
+library(p8105.datasets)
+data("instacart")
+instacart
+```
+
+The "instacart" dataset is `r nrow(instacart)` rows by `r ncol(instacart)` columns. 
+
+There are a few variables that appear to be key to telling us what the dataset is. 
+
+The variable "product_name" is an item that was placed in a cart. Order have an "order_id" number.
+
+Each item in a cart has an "add_to_cart_order", for instance, in the head of the data, "order_id" 1
+
+had 8 items added, 1 through 8 and "add_to_cart_order" gives the order in which the 
+
+items were added.  There are columns that tell the time of day of the order, the days 
+
+since the prior order, and whether a specific item was reordered or not. There are 
+
+also details about where the item is found (aisle, department)
+
+```{r}
+instacart %>% 
+  distinct(aisle)
+```
+
