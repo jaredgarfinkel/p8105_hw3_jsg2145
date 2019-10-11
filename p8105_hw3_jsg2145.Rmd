@@ -16,20 +16,21 @@ library(p8105.datasets)
 data("instacart")
 data("brfss_smart2010")
 ```
+## Problem 1
 
 The "instacart" dataset is `r nrow(instacart)` rows by `r ncol(instacart)` columns. 
 
 There are a few variables that appear to be key to telling us what the dataset is. 
 
-The variable "product_name" is an item that was placed in a cart. Order have an "order_id" number.
+The variable "product_name" is an item that was placed in a cart. Orders have an "order_id" number.
 
-Each item in a cart has an "add_to_cart_order", for instance, in the head of the data, "order_id" 1
+Each item in a cart has an "add_to_cart_order", for instance, in the head of the data, "order_id" = 1
 
-had 8 items added, 1 through 8 and "add_to_cart_order" gives the order in which the 
+had 8 items added, numbered 1 through 8, and "add_to_cart_order" gives the order in which the 
 
 items were added.  There are columns that tell the time of day of the order, the days 
 
-since the prior order, and whether a specific item was reordered or not. There are 
+since the prior order, and whether a specific item had been reordered or not. There are 
 
 also details about where the item is found (aisle, department)
 
@@ -41,9 +42,11 @@ aisle_dat <- instacart %>%
   arrange(desc(count))
 ```
 
-## Problem 1
+There are `r nrow(aisle_dat)` aisles, and "`r pull(top_n(aisle_dat, 1, count), aisle)`" was the aisle the most items were ordered from. 
 
-There are `r nrow(aisle_dat)` aisles, and `r pull(top_n(aisle_dat, 1, count), aisle)` was the aisle the most items were ordered from.
+Fresh fruit and vegetables are the top two aisles from which items were ordered by a significant margin,
+
+with packaged fruit and vegetables coming in a distant third.
 
 ```{r, fig.width = 10}
 instacart %>% 
@@ -52,12 +55,17 @@ instacart %>%
   filter(
     n > 10000
   ) %>% 
-  ggplot(aes(x = aisle, y = n)) +
+  ggplot(aes(x = reorder(aisle, n), y = n)) +
   geom_col() +
-  labs(xlab = "Count",
-       ylab = "Aisle")
+  labs(x = "Aisle",
+       y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 ```
+
+This plot shows the top 39 most ordered from aisles. This represents the top `r 39/134*100` percent 
+
+of aisles ordered from over the time period of the data.
 
 ```{r}
 instacart %>% 
@@ -84,6 +92,14 @@ instacart %>%
   knitr::kable()
 ```
 
+This table shows the top three items ordered from the aisles "baking ingredients", 
+
+"dog food care", and "packaged vegetables fruits" in the time period of the data. There is a wide range in the
+
+number of times each item was ordered. Dog food may not be something many people think to have
+
+delivered from a grocery store.
+
 ```{r}
 instacart %>% 
   filter(product_name == c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
@@ -100,9 +116,27 @@ instacart %>%
     values_from = mean_hr
   ) %>% 
   knitr::kable()
-  
-  
 ```
+
+```{r}
+instacart %>% 
+  filter(product_name == c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarize(
+    mean_hr = round(mean(order_hour_of_day), digits = 1)
+  ) %>% 
+  mutate(
+    order_dow = factor(order_dow, 
+                       labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))) %>%
+  ggplot(aes(x = order_dow, y = mean_hr, color = product_name)) +
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+
+
+This table shows the time of day these items were ordered. It appears Coffee Ice Cream was 
+
+ordered later in the day most days except for Fridays for some reason.
 
 ## Problem 2
 
@@ -121,7 +155,7 @@ brfss_smart2010 <- brfss_smart2010 %>%
 ```
 
 ```{r}
-brfss_smart2010 %>% 
+many_loc_02 <- brfss_smart2010 %>% 
   filter(year == 2002) %>% 
   select(state) %>% 
   group_by(state) %>% 
@@ -131,8 +165,11 @@ brfss_smart2010 %>%
          Locations = n) %>% 
   knitr::kable()
 ```
+
+There are `r nrow(many_loc_02)` states with 7 or more locations included in the BRFSS data in 2002.
+
 ```{r}
-brfss_smart2010 %>% 
+many_loc_10 <- brfss_smart2010 %>% 
   filter(year == 2010) %>% 
   select(state, locationdesc) %>% 
   group_by(state) %>% 
@@ -142,6 +179,8 @@ brfss_smart2010 %>%
          Locations = n) %>% 
   knitr::kable()
 ```
+
+By 2010, there were `r nrow(many_loc_10)` states with 7 or more locations included in the data.
 
 ```{r}
 df <- brfss_smart2010 %>% 
@@ -157,16 +196,22 @@ df <- brfss_smart2010 %>%
 df %>% 
   ggplot(aes(x = year, y = mean_dat, group = state, color = state)) +
   geom_line() +
-  theme(legend.position = "bottom") +
+  theme(legend.position = "none") +
   viridis::scale_color_viridis(
     name = "state",
-    discrete = TRUE)
+    discrete = TRUE) +
+  labs(
+    x = "Year",
+    y = "Average Crude Prevalence of 'Excellent' Health (%)"
+  )
 ```
+
+This chart shows the crude prevalence of a response of "excellent" to the question "How is your general health?"
 
 ```{r}
 brfss_smart2010 %>% 
   filter(state == "New York",
-         year == c(2006, 2010)) %>% 
+         year %in% c(2006, 2010)) %>% 
   ggplot(aes(x = response, y = data_value)) +
   geom_boxplot() +
   labs(x = "Response",
@@ -210,19 +255,18 @@ accel_dat %>%
   knitr::kable()
 ```
 
-```{r, fig.width = 8}
+```{r, fig.width = 10}
 accel_dat %>% 
-  group_by(day_id, weekday) %>%
+  group_by(day_id, day) %>%
   mutate(
     day_act = cumsum(activity)
   ) %>% 
   summarize(
     day_act = last(day_act)
   ) %>% 
-  rename(Weekday = weekday) %>% 
-  ggplot(aes(x = day_id, y = day_act, color = Weekday)) +
+  rename(Day = day) %>% 
+  ggplot(aes(x = day_id, y = day_act, color = Day)) +
   geom_point() + 
-  geom_smooth(se = FALSE) +
   labs(
     x = "Day of Study (1-35)",
     y = "Total Activity"
