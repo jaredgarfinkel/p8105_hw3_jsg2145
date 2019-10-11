@@ -177,3 +177,63 @@ brfss_smart2010 %>%
 
 ## Problem 3
 
+```{r}
+accel_dat <- read_csv("./data/accel_data.csv") %>% 
+  pivot_longer(
+    cols = activity.1:activity.1440,
+    names_to = "minute",
+    values_to = "activity") %>% 
+  group_by(day) %>% 
+  mutate(
+    weekday = ifelse(day %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday"), "Weekday", "Weekend")
+  )
+```
+
+There are `r nrow(accel_dat)` rows and `r ncol(accel_dat)` columns in this dataset. There is a minute
+
+variable for each minute of a day, a weekday variable for whether the day of the week is a weekend or 
+
+a weekday, a week variable for each of the five weeks of observations, and a variable, "day_id" for 
+
+each day in the study. The final variable measures the activity of the subject at each interval.
+
+```{r, echo = FALSE}
+accel_dat %>% 
+  aggregate(activity ~ day_id, data = ., sum) %>% 
+  ggplot(aes(x = day_id, y = activity)) +
+  geom_point() + geom_smooth(se = FALSE)
+```
+
+```{r}
+accel_dat %>% 
+  aggregate(activity ~ day_id, data = ., sum) %>% 
+  knitr::kable()
+```
+
+```{r, fig.width = 8}
+accel_dat %>% 
+  group_by(day_id, weekday) %>%
+  mutate(
+    day_act = cumsum(activity)
+  ) %>% 
+  summarize(
+    day_act = last(day_act)
+  ) %>% 
+  rename(Weekday = weekday) %>% 
+  ggplot(aes(x = day_id, y = day_act, color = Weekday)) +
+  geom_point() + 
+  geom_smooth(se = FALSE) +
+  labs(
+    x = "Day of Study (1-35)",
+    y = "Total Activity"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_discrete(limits = 0:36)
+  
+```
+
+```{r}
+accel_dat %>% 
+  select(weekday, day_id, day)
+```
+
