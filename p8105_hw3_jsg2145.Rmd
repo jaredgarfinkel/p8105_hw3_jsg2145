@@ -128,9 +128,14 @@ instacart %>%
   mutate(
     order_dow = factor(order_dow, 
                        labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))) %>%
-  ggplot(aes(x = order_dow, y = mean_hr, color = product_name)) +
+  rename("Product Name" = product_name) %>% 
+  ggplot(aes(x = order_dow, y = mean_hr, color = "Product Name")) +
   geom_point() + 
-  geom_smooth(se = FALSE)
+  geom_smooth(se = FALSE) +
+  labs(
+    x = "Order Day of the Week",
+    y = "Average Hour of the Order"
+  )
 ```
 
 
@@ -245,8 +250,14 @@ each day in the study. The final variable measures the activity of the subject a
 ```{r, echo = FALSE}
 accel_dat %>% 
   aggregate(activity ~ day_id, data = ., sum) %>% 
-  ggplot(aes(x = day_id, y = activity)) +
-  geom_point() + geom_smooth(se = FALSE)
+  rename(
+    "Day of Study (1-35)" = day_id,
+    "Total Activity" = activity
+  ) %>% 
+  ggplot(aes(x = "Day of Study (1-35)", y = "Total Activity")) +
+  geom_point() + 
+  geom_smooth(se = FALSE)
+  
 ```
 
 ```{r}
@@ -254,6 +265,10 @@ accel_dat %>%
   aggregate(activity ~ day_id, data = ., sum) %>% 
   knitr::kable()
 ```
+
+It's difficult to tell what's going on in this data from the table. A graph shows that it is difficult to 
+
+predict a trend.
 
 ```{r, fig.width = 10}
 accel_dat %>% 
@@ -276,8 +291,6 @@ accel_dat %>%
   
 ```
 
-```{r}
-accel_dat %>% 
-  select(weekday, day_id, day)
-```
+This graph shows that the activity of the subject changed from week to week.
 
+It is difficiult to predict a trend by the day of the week.
